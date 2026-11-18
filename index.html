@@ -87,11 +87,11 @@
             cursor: pointer;
             transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
             position: relative;
-            overflow: hidden; /* Скрываем края внутренней пульсации */
+            overflow: hidden;
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* --- Внутренняя пульсация света (по всей сфере) --- */
+        /* --- Внутренняя пульсация света --- */
         .magic-ball::after {
             content: '';
             position: absolute;
@@ -100,7 +100,7 @@
             background: radial-gradient(circle at center, rgba(255,255,255,0.4) 0%, transparent 70%);
             animation: innerGlow 4s ease-in-out infinite alternate;
             pointer-events: none;
-            z-index: 1; /* Под текстом, над фоном */
+            z-index: 1;
         }
 
         @keyframes innerGlow {
@@ -147,24 +147,28 @@
 
         /* --- Текст ответа --- */
         .answer-text {
-            /* Серый цвет, чуть светлее сферы */
             color: #a0a0a0; 
-            /* Выразительный шрифт без засечек */
             font-family: 'Arial Black', Impact, 'Helvetica Neue', sans-serif;
             font-weight: 900; 
             text-transform: uppercase; 
             text-align: center;
             padding: 0 15px;
-            line-height: 1.05; 
-            letter-spacing: -0.5px; /* Чуть плотнее для брутальности */
-            z-index: 3; /* Текст всегда сверху */
-            width: 95%; 
-            word-wrap: break-word;
+            line-height: 1.1; 
+            letter-spacing: -0.5px; 
+            z-index: 3; 
+            width: 100%; 
+            
+            /* Отключаем разрыв слов пополам, если не влезает */
+            word-wrap: normal; 
+            overflow-wrap: break-word; 
+            
+            /* Свойство для красивого переноса строк (без одиноких букв) */
+            text-wrap: balance; 
             
             filter: blur(15px);
             opacity: 0;
             transition: filter 3s ease-out, opacity 3s ease-out;
-            text-shadow: 0 2px 15px rgba(0,0,0,0.9); /* Тень для читаемости */
+            text-shadow: 0 2px 15px rgba(0,0,0,0.9); 
         }
 
         .answer-text.visible {
@@ -243,18 +247,21 @@
             }
         }
 
-        // --- АВТОМАТИЧЕСКИЙ ПОДБОР РАЗМЕРА ШРИФТА (БАЗА 96px) ---
+        // --- АВТОМАТИЧЕСКИЙ ПОДБОР РАЗМЕРА ШРИФТА ---
         function adjustFontSize() {
             let currentSize = 96; 
             answerText.style.fontSize = `${currentSize}px`;
             
-            // Чуть увеличили лимиты из-за жирного шрифта
-            const maxHeight = 260; 
-            const maxWidth = 280;
+            // Ограничиваем ширину, чтобы текст не прилипал к краям (из-за круглой формы)
+            answerText.style.maxWidth = '230px'; 
+            // Ограничиваем высоту
+            const maxHeight = 220; 
 
+            // Проверяем, влезает ли текст в рамки. 
+            // Используем scrollHeight и scrollWidth для точного измерения содержимого
             while (
-                (answerText.offsetHeight > maxHeight || answerText.offsetWidth > maxWidth) 
-                && currentSize > 36
+                (answerText.scrollHeight > maxHeight || answerText.scrollWidth > 230) 
+                && currentSize > 24
             ) {
                 currentSize -= 2; 
                 answerText.style.fontSize = `${currentSize}px`;
