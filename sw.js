@@ -1,4 +1,4 @@
-const CACHE_NAME = 'magic-ball-v6'; // Сброс кэша
+const CACHE_NAME = 'magic-ball-v7'; // Сброс кэша
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', (e) => {
