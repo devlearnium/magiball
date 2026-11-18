@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Магический Шар</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    
+    <style>
+        :root {
+            --bg-color: #000000;
+            --ball-bg: radial-gradient(circle at 30% 30%, #2a2a2a, #111111 70%);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- Фон со звездами --- */
+        .stars-container {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            overflow: hidden;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            background-color: #fff;
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: twinkle infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.1; transform: scale(0.8); }
+            100% { opacity: 0.8; transform: scale(1.2); }
+        }
+
+        /* --- Контейнер для левитации --- */
+        .ball-container {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* --- Сам шар --- */
+        .magic-ball {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: var(--ball-bg);
+            box-shadow: 
+                inset -20px -20px 50px rgba(0,0,0,0.8),
+                inset 10px 10px 30px rgba(255,255,255,0.05),
+                0 20px 50px rgba(0,0,0,0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden; /* Скрываем края внутренней пульсации */
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* --- Внутренняя пульсация света (по всей сфере) --- */
+        .magic-ball::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.4) 0%, transparent 70%);
+            animation: innerGlow 4s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 1; /* Под текстом, над фоном */
+        }
+
+        @keyframes innerGlow {
+            0% { opacity: 0.1; transform: scale(0.9); }
+            100% { opacity: 0.9; transform: scale(1.1); }
+        }
+
+        .magic-ball:active {
+            transform: scale(0.95);
+        }
+
+        .magic-ball.pulsing {
+            animation: clickPulse 0.6s ease-out;
+        }
+
+        @keyframes clickPulse {
+            0% { transform: scale(0.95); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        /* Внутренний туман при поиске ответа */
+        .magic-ball::before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .magic-ball.thinking::before {
+            opacity: 1;
+            animation: rotateTunnel 3s linear infinite;
+        }
+
+        @keyframes rotateTunnel {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* --- Текст ответа --- */
+        .answer-text {
+            /* Серый цвет, чуть светлее сферы */
+            color: #a0a0a0; 
+            /* Выразительный шрифт без засечек */
+            font-family: 'Arial Black', Impact, 'Helvetica Neue', sans-serif;
+            font-weight: 900; 
+            text-transform: uppercase; 
+            text-align: center;
+            padding: 0 15px;
+            line-height: 1.05; 
+            letter-spacing: -0.5px; /* Чуть плотнее для брутальности */
+            z-index: 3; /* Текст всегда сверху */
+            width: 95%; 
+            word-wrap: break-word;
+            
+            filter: blur(15px);
+            opacity: 0;
+            transition: filter 3s ease-out, opacity 3s ease-out;
+            text-shadow: 0 2px 15px rgba(0,0,0,0.9); /* Тень для читаемости */
+        }
+
+        .answer-text.visible {
+            filter: blur(0);
+            opacity: 1;
+        }
+
+        /* Подсказка внизу */
+        .hint {
+            position: absolute;
+            bottom: 40px;
+            color: #555;
+            font-size: 14px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            z-index: 2;
+            transition: opacity 0.5s;
+            pointer-events: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="stars-container" id="starsContainer"></div>
+
+    <div class="ball-container">
+        <div class="magic-ball" id="magicBall">
+            <div class="answer-text" id="answerText"></div>
+        </div>
+    </div>
+
+    <div class="hint" id="hint">Нажми на шар</div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW reg failed', err));
+        }
+
+        const answers = [
+            "Бесспорно", "Предрешено", "Никаких сомнений", "Определённо да", "Можешь быть уверен",
+            "Мне кажется — да", "Вероятнее всего", "Хорошие перспективы", "Знаки говорят — да", "Да",
+            "Пока не ясно, попробуй снова", "Спроси позже", "Лучше не рассказывать", "Сейчас нельзя предсказать",
+            "Сконцентрируйся и спроси опять", "Даже не думай", "Мой ответ — нет", "По моим данным — нет",
+            "Перспективы не очень хорошие", "Весьма сомнительно", "Определённо нет", "Время покажет",
+            "Действуй смело", "Не торопись", "Прислушайся к себе", "Риск оправдан", "Лучше откажись",
+            "Сделай это сегодня", "Отложи на завтра", "Спроси у друга", "Доверься интуиции",
+            "Шансы высоки", "Шансы низки", "Всё сложится удачно", "Будь готов к неожиданностям",
+            "Не всё так просто", "Решение за тобой", "Сделай шаг вперёд", "Остановись и подумай",
+            "Да, но с осторожностью", "Нет, но есть альтернатива", "Это того стоит", "Не трать время",
+            "Начни прямо сейчас", "Подожди ещё немного", "Ответ уже внутри тебя", "Всё в твоих руках",
+            "Не сомневайся", "Сделай по-своему", "Ожидай хороших новостей"
+        ];
+
+        const magicBall = document.getElementById('magicBall');
+        const answerText = document.getElementById('answerText');
+        const hint = document.getElementById('hint');
+        const starsContainer = document.getElementById('starsContainer');
+
+        let isRolling = false;
+
+        function generateStars() {
+            const starCount = 40;
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const size = Math.random() * 2 + 1;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.animationDuration = `${Math.random() * 3 + 2}s`;
+                star.style.animationDelay = `${Math.random() * 2}s`;
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // --- АВТОМАТИЧЕСКИЙ ПОДБОР РАЗМЕРА ШРИФТА (БАЗА 96px) ---
+        function adjustFontSize() {
+            let currentSize = 96; 
+            answerText.style.fontSize = `${currentSize}px`;
+            
+            // Чуть увеличили лимиты из-за жирного шрифта
+            const maxHeight = 260; 
+            const maxWidth = 280;
+
+            while (
+                (answerText.offsetHeight > maxHeight || answerText.offsetWidth > maxWidth) 
+                && currentSize > 36
+            ) {
+                currentSize -= 2; 
+                answerText.style.fontSize = `${currentSize}px`;
+            }
+        }
+
+        function rollTheBall() {
+            if (isRolling) return;
+            isRolling = true;
+            
+            if (navigator.vibrate) navigator.vibrate(30);
+
+            hint.style.opacity = '0';
+            answerText.classList.remove('visible');
+            magicBall.classList.add('thinking', 'pulsing');
+
+            setTimeout(() => {
+                const randomIndex = Math.floor(Math.random() * answers.length);
+                answerText.textContent = answers[randomIndex];
+
+                adjustFontSize();
+
+                magicBall.classList.remove('thinking');
+                answerText.classList.add('visible');
+                
+                if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+
+                setTimeout(() => {
+                    isRolling = false;
+                }, 4000);
+
+            }, 800);
+        }
+
+        generateStars();
+        magicBall.addEventListener('click', rollTheBall);
+    </script>
+</body>
+</html>
